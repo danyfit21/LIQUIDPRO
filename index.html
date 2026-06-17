@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>DESENGRAS VLG — Potencia industrial. Limpieza precisa.</title>
+
+<!-- ============================ FONTS ============================ -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+/* ============================ RESET / BASE ============================ */
+*,
+*::before,
+*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root{
+  --white:    #f7f8fa;
+  --light:    #e9ecf1;
+  --gray:     #7088b3;
+  --graphite: #b4c8ee;
+  --ink:      #eaf2ff;
+  --silver:   #c8cdd6;
+  --blue:     #4f93ff;
+  --blue-deep:#0a2a6b;
+  --blue-glow:#5fb2ff;
+  --aqua:     #46b6ff;
+  --neon:     #3fe0ff;
+  --neon-2:   #1f9bff;
+  --bg-0:#02102b; --bg-1:#06234f; --bg-2:#0d3f82;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-disp: 'Space Grotesk', 'Inter', sans-serif;
+}
+
+html, body { height: 100%; }
+
+body{
+  font-family: var(--font-body);
+  color: var(--ink);
+  background:
+    radial-gradient(125% 95% at 50% 6%, #0d3f82 0%, #06234f 48%, #02102b 100%) fixed;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ============================ PARALLAX BACKGROUND LAYER ============================ */
+#bg-layer{
+  position: fixed;
+  inset: -15vh -15vw;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(70% 55% at 50% 10%, rgba(28,96,190,0.55), transparent 70%),
+    radial-gradient(95% 85% at 50% 112%, rgba(2,12,38,0.95), transparent 72%);
+  will-change: transform;
+}
+/* animated aqueous light pools (slow underwater drift) */
+#bg-layer::before,
+#bg-layer::after{
+  content:"";
+  position:absolute;
+  border-radius:50%;
+  filter: blur(75px);
+  mix-blend-mode: screen;
+  opacity:.5;
+  will-change: transform;
+}
+#bg-layer::before{
+  width:58vw; height:58vw;
+  left:6%; top:4%;
+  background: radial-gradient(circle, rgba(70,182,255,0.6), transparent 65%);
+  animation: aqua1 19s ease-in-out infinite;
+}
+#bg-layer::after{
+  width:50vw; height:50vw;
+  right:4%; bottom:2%;
+  background: radial-gradient(circle, rgba(36,108,228,0.55), transparent 65%);
+  animation: aqua2 24s ease-in-out infinite;
+}
+@keyframes aqua1{
+  0%,100%{ transform: translate(0,0) scale(1); }
+  50%{ transform: translate(7vw,5vh) scale(1.18); }
+}
+@keyframes aqua2{
+  0%,100%{ transform: translate(0,0) scale(1.06); }
+  50%{ transform: translate(-6vw,-6vh) scale(0.88); }
+}
+
+/* soft grid texture for industrial feel */
+#bg-grid{
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: .5;
+  background-image:
+    linear-gradient(rgba(130,190,255,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(130,190,255,0.05) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(80% 70% at 50% 40%, #000 0%, transparent 85%);
+          mask-image: radial-gradient(80% 70% at 50% 40%, #000 0%, transparent 85%);
+}
+
+/* ============================ FX PARTICLE CANVAS ============================ */
+#fx-canvas{
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100svh;
+  display: block;
+  pointer-events: none;
+}
+
+/* ============================ THREE.JS CANVAS ============================ */
+#scene-canvas{
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  width: 100vw;
+  height: 100vh;
+  height: 100svh;
+  display: block;
+  pointer-events: none;
+}
+
+/* contact shadow plane glow under product */
+#floor-glow{
+  position: fixed;
+  left: 50%;
+  bottom: 8vh;
+  transform: translateX(-50%);
+  width: min(620px, 70vw);
+  height: 120px;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(50% 50% at 50% 50%, rgba(90,180,255,0.38), transparent 70%);
+  filter: blur(16px);
+  opacity: .6;
+}
+
+/* light sweep overlay (sequence 3) */
+#light-sweep{
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(105deg,
+    transparent 30%,
+    rgba(255,255,255,0.55) 47%,
+    rgba(255,255,255,0.85) 50%,
+    rgba(255,255,255,0.55) 53%,
+    transparent 70%);
+  mix-blend-mode: screen;
+  transform: translateX(-30%);
+}
+
+/* ============================ LOADING SCREEN ============================ */
+#loader{
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  background:
+    radial-gradient(125% 95% at 50% 12%, #0d3f82 0%, #06234f 50%, #02102b 100%);
+  transition: opacity .8s ease, visibility .8s ease;
+}
+#loader.hidden{ opacity: 0; visibility: hidden; }
+
+.loader-mark{
+  font-family: var(--font-disp);
+  font-weight: 700;
+  letter-spacing: .42em;
+  font-size: clamp(13px, 2vw, 16px);
+  color: var(--graphite);
+  text-transform: uppercase;
+  padding-left: .42em;
+}
+.loader-sub{
+  font-size: 12px;
+  letter-spacing: .26em;
+  text-transform: uppercase;
+  color: var(--gray);
+  font-weight: 500;
+}
+.loader-bar{
+  width: min(320px, 64vw);
+  height: 2px;
+  background: rgba(255,255,255,0.16);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.loader-bar > span{
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--blue-deep), var(--blue-glow));
+  transition: width .25s ease;
+}
+.loader-pct{
+  font-family: var(--font-disp);
+  font-size: 12px;
+  letter-spacing: .18em;
+  color: var(--graphite);
+  font-variant-numeric: tabular-nums;
+}
+.loader-spin{
+  width: 30px; height: 30px;
+  border: 2px solid rgba(255,255,255,0.18);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin{ to{ transform: rotate(360deg);} }
+
+/* ============================ FALLBACK MESSAGE ============================ */
+#fallback{
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  padding: 40px;
+  background: radial-gradient(125% 95% at 50% 12%, #0d3f82 0%, #06234f 50%, #02102b 100%);
+}
+#fallback.show{ display: flex; }
+#fallback h2{
+  font-family: var(--font-disp);
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--graphite);
+  font-size: clamp(18px, 3vw, 26px);
+}
+#fallback p{ color: var(--gray); max-width: 420px; line-height: 1.6; font-size: 14px; }
+
+/* ============================ SCROLL CONTENT / OVERLAYS ============================ */
+#scroll-root{ position: relative; z-index: 3; }
+
+.panel{
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  padding: 0 clamp(24px, 7vw, 120px);
+  pointer-events: none;
+}
+.panel .content{ max-width: 560px; pointer-events: auto; }
+.panel.right{ justify-content: flex-end; text-align: right; }
+.panel.right .content{ margin-left: auto; }
+.panel.center{ justify-content: center; text-align: center; }
+.panel.center .content{ margin: 0 auto; }
+/* close-up shot panels: keep caption low so the product fills the frame */
+.panel.shot{ align-items: flex-end; padding-bottom: 11vh; }
+.panel.shot .content{ text-align: center; margin: 0 auto; }
+/* keep captions legible over the bright product */
+.panel.shot .headline{
+  text-shadow: 0 2px 22px rgba(2,10,30,0.85), 0 0 14px rgba(63,224,255,0.34), 0 0 26px rgba(31,155,255,0.18);
+}
+.panel.shot .eyebrow{
+  text-shadow: 0 2px 12px rgba(2,10,30,0.82), 0 0 8px rgba(63,224,255,0.8), 0 0 16px rgba(63,224,255,0.35);
+}
+
+/* global legibility + neon detailing: white stays the body colour, cyan glows as accent */
+.subline, .tag, .final-note{
+  text-shadow: 0 1px 16px rgba(2,10,28,0.6), 0 1px 3px rgba(2,10,28,0.45);
+}
+.headline{
+  text-shadow:
+    0 1px 16px rgba(2,10,28,0.62),
+    0 0 12px rgba(63,224,255,0.32),
+    0 0 24px rgba(31,155,255,0.16);
+}
+.eyebrow{
+  color: var(--neon);
+  text-shadow:
+    0 1px 8px rgba(2,10,28,0.62),
+    0 0 8px rgba(63,224,255,0.8),
+    0 0 16px rgba(63,224,255,0.35);
+}
+.panel.center .content,
+.panel.shot .content{ position: relative; }
+.panel.center .content::before,
+.panel.shot .content::before{
+  content:"";
+  position:absolute;
+  inset:-16% -22%;
+  background: radial-gradient(58% 62% at 50% 50%, rgba(2,9,26,0.6), rgba(2,9,26,0.28) 46%, transparent 74%);
+  filter: blur(10px);
+  z-index:-1;
+  pointer-events:none;
+}
+
+.eyebrow{
+  font-family: var(--font-disp);
+  font-size: clamp(10px, 1.2vw, 12px);
+  letter-spacing: .34em;
+  text-transform: uppercase;
+  color: var(--blue);
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+.headline{
+  font-family: var(--font-disp);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  font-size: clamp(34px, 6.4vw, 88px);
+}
+.headline .thin{ font-weight: 400; color: #8fe9ff; }
+.subline{
+  margin-top: 20px;
+  font-size: clamp(15px, 1.7vw, 20px);
+  line-height: 1.55;
+  color: var(--graphite);
+  font-weight: 400;
+  max-width: 46ch;
+}
+.panel.right .subline, .panel.center .subline{ margin-left: auto; margin-right: 0; }
+.panel.center .subline{ margin-left: auto; margin-right: auto; }
+.tag{
+  display: inline-block;
+  margin-top: 24px;
+  font-size: 12px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: #bfe9ff;
+  font-weight: 500;
+  border: 1px solid rgba(63,224,255,0.42);
+  box-shadow: 0 0 20px rgba(63,224,255,0.18), inset 0 0 14px rgba(63,224,255,0.08);
+  border-radius: 999px;
+  padding: 8px 16px;
+}
+
+/* hero specific */
+#hero .headline{ font-size: clamp(40px, 8.5vw, 120px); }
+
+/* animation start states (GSAP will reveal) */
+.reveal{ opacity: 0; transform: translateY(34px); }
+
+/* scroll hint */
+.scroll-hint{
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--gray);
+  font-size: 10px;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  transition: opacity .4s ease;
+}
+.scroll-hint .mouse{
+  width: 22px; height: 36px;
+  border: 1.5px solid var(--gray);
+  border-radius: 12px;
+  position: relative;
+}
+.scroll-hint .mouse::after{
+  content:"";
+  position: absolute;
+  left: 50%; top: 7px;
+  width: 3px; height: 7px;
+  border-radius: 2px;
+  background: var(--gray);
+  transform: translateX(-50%);
+  animation: wheel 1.6s ease-in-out infinite;
+}
+@keyframes wheel{ 0%{opacity:0; transform:translate(-50%,0);} 30%{opacity:1;} 100%{opacity:0; transform:translate(-50%,12px);} }
+
+/* ============================ FINAL CTA ============================ */
+#final .content{ max-width: 680px; }
+.cta-btn{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 34px;
+  padding: 18px 38px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(120deg, var(--blue-deep), var(--blue));
+  color: #fff;
+  font-family: var(--font-disp);
+  font-weight: 600;
+  font-size: clamp(14px, 1.5vw, 16px);
+  letter-spacing: .06em;
+  cursor: pointer;
+  pointer-events: auto;
+  overflow: hidden;
+  box-shadow: 0 18px 40px -16px rgba(31,95,255,0.6), 0 0 28px rgba(63,224,255,0.4), inset 0 0 0 1px rgba(63,224,255,0.35);
+  transition: transform .3s ease, box-shadow .3s ease;
+}
+.cta-btn:hover{ transform: translateY(-3px); box-shadow: 0 26px 50px -16px rgba(31,95,255,0.75), 0 0 40px rgba(63,224,255,0.6), inset 0 0 0 1px rgba(63,224,255,0.55); }
+.cta-btn .arrow{ transition: transform .3s ease; }
+.cta-btn:hover .arrow{ transform: translateX(5px); }
+.cta-btn::after{
+  content:"";
+  position:absolute; inset:0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.4) 50%, transparent 60%);
+  transform: translateX(-120%);
+}
+.cta-btn:hover::after{ transition: transform .7s ease; transform: translateX(120%); }
+
+/* dual CTA: Amazon (primary) + own checkout (secondary) */
+.cta-btn{ text-decoration: none; }
+.cta-group{
+  margin-top: 34px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: center;
+  align-items: center;
+}
+.cta-group .cta-btn{ margin-top: 0; }
+.cta-ico{ flex: none; }
+.cta-amazon{
+  background: linear-gradient(120deg, #ff9b1e, #ffc24d);
+  color: #1a1205;
+  box-shadow: 0 18px 40px -16px rgba(255,160,30,0.6), 0 0 26px rgba(255,180,60,0.35);
+}
+.cta-amazon:hover{ box-shadow: 0 26px 50px -16px rgba(255,160,30,0.78), 0 0 42px rgba(255,180,60,0.6); }
+.cta-ghost{
+  background: rgba(8,24,54,0.4);
+  color: #eaf2ff;
+  border: 1px solid rgba(63,224,255,0.5);
+  box-shadow: 0 0 22px rgba(63,224,255,0.16), inset 0 0 14px rgba(63,224,255,0.08);
+}
+.cta-ghost:hover{ box-shadow: 0 0 36px rgba(63,224,255,0.42), inset 0 0 18px rgba(63,224,255,0.14); }
+
+.final-note{
+  margin-top: 22px;
+  font-size: 12px;
+  letter-spacing: .14em;
+  color: var(--gray);
+  text-transform: uppercase;
+}
+
+/* ============================ TOP BAR ============================ */
+.topbar{
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px clamp(24px, 6vw, 80px);
+  pointer-events: none;
+}
+.brand{
+  font-family: var(--font-disp);
+  font-weight: 700;
+  letter-spacing: .26em;
+  font-size: 14px;
+  color: #eaf2ff;
+  text-shadow: 0 0 10px rgba(63,224,255,0.45), 0 0 24px rgba(63,224,255,0.28);
+}
+.brand .dot{ color: var(--neon); text-shadow: 0 0 12px var(--neon), 0 0 26px rgba(63,224,255,0.6); }
+.topbar .meta{
+  font-size: 11px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--gray);
+  font-weight: 500;
+}
+
+/* ============================ MOBILE ============================ */
+@media (max-width: 760px){
+  #floor-glow{ width: 80vw; bottom: 12vh; }
+  .panel{ align-items: flex-end; padding-bottom: 14vh; }
+  .panel.center{ align-items: center; padding-bottom: 0; }
+  .panel.right{ text-align: left; justify-content: flex-start; }
+  .panel.right .content{ margin-left: 0; }
+  .panel.right .subline{ margin-left: 0; }
+  .subline{ font-size: 15px; }
+  .topbar .meta{ display: none; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration: .001ms !important; }
+}
+
+/* ============================ HERO CTA ============================ */
+.hero-cta{ margin-top: 26px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.hero-price{ display: flex; gap: 12px; align-items: baseline; justify-content: center; }
+.price-now{ font-family: var(--font-disp); font-size: 30px; font-weight: 700; color: #fff; text-shadow: 0 0 18px rgba(63,224,255,0.35); }
+.price-old{ text-decoration: line-through; color: var(--gray); font-size: 18px; }
+.hero-cta .cta-btn{ margin-top: 4px; }
+.hero-trust{ color: #cfe0ff; font-size: 13px; letter-spacing: .03em; }
+.hero-trust span:last-child{ color: var(--gray); }
+.stars{ color: #ffc24d; letter-spacing: 2px; }
+
+/* ============================ CONVERSION FUNNEL ============================ */
+#funnel{
+  position: relative;
+  z-index: 4;
+  background: linear-gradient(180deg, rgba(2,15,40,0.94), #041532 14%, #03112b 100%);
+}
+.sec{ padding: clamp(60px,9vh,110px) clamp(22px,6vw,72px); }
+.wrap{ max-width: 1100px; margin: 0 auto; }
+.sec-head{ text-align: center; max-width: 760px; margin: 0 auto clamp(34px,5vh,54px); }
+.sec-eyebrow{ font-family: var(--font-disp); font-size: 12px; letter-spacing: .34em; text-transform: uppercase; color: var(--neon); font-weight: 600; text-shadow: 0 0 10px rgba(63,224,255,0.7); }
+.sec-title{ font-family: var(--font-disp); font-weight: 700; line-height: 1.05; letter-spacing: -0.01em; font-size: clamp(28px,4.6vw,50px); color: #eaf2ff; margin-top: 14px; text-shadow: 0 0 22px rgba(63,224,255,0.25); }
+.sec-title .thin{ color: #8fe9ff; font-weight: 400; }
+.sec-lead{ margin-top: 18px; font-size: clamp(15px,1.6vw,18px); line-height: 1.6; color: var(--graphite); }
+
+.grid{ display: grid; gap: 18px; }
+.g3{ grid-template-columns: repeat(3,1fr); }
+.g2{ grid-template-columns: repeat(2,1fr); }
+.card{ background: rgba(255,255,255,0.045); border: 1px solid rgba(120,180,255,0.12); border-radius: 18px; padding: 28px; backdrop-filter: blur(6px); }
+.card h3{ font-family: var(--font-disp); font-size: 19px; color: #eaf2ff; margin-bottom: 10px; }
+.card p{ color: var(--graphite); line-height: 1.55; font-size: 15px; }
+.ico{ width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(63,224,255,0.18), rgba(31,155,255,0.12)); border: 1px solid rgba(63,224,255,0.3); margin-bottom: 18px; font-size: 22px; box-shadow: 0 0 18px rgba(63,224,255,0.18); }
+
+/* problem / solution */
+.split{ display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: stretch; }
+.panel-card{ background: rgba(255,255,255,0.04); border: 1px solid rgba(120,180,255,0.12); border-radius: 20px; padding: 32px; }
+.panel-card.good{ border-color: rgba(63,224,255,0.4); box-shadow: 0 0 30px rgba(63,224,255,0.12); }
+.panel-card h3{ font-family: var(--font-disp); font-size: 18px; color: #eaf2ff; }
+.checklist{ list-style: none; margin-top: 16px; display: grid; gap: 12px; }
+.checklist li{ display: flex; gap: 12px; color: #dce8ff; font-size: 15px; line-height: 1.5; }
+.checklist li::before{ content: "✓"; color: var(--neon); font-weight: 700; }
+.crosslist li::before{ content: "✕"; color: #ff7a7a; }
+
+/* use cases */
+.usecases{ display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 28px; }
+.usecase{ padding: 12px 20px; border-radius: 999px; background: rgba(255,255,255,0.05); border: 1px solid rgba(120,180,255,0.16); color: #dce8ff; font-weight: 500; font-size: 14px; }
+
+/* media placeholder (video / antes-después) */
+.media{ position: relative; border-radius: 20px; overflow: hidden; border: 1px solid rgba(120,180,255,0.15); aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; }
+.media.video{ background: linear-gradient(135deg,#0a2350,#05163a); color: var(--gray); font-size: 13px; letter-spacing: .14em; text-transform: uppercase; }
+.media .play{ position:absolute; width: 70px; height: 70px; border-radius: 50%; background: rgba(63,224,255,0.18); border: 1px solid rgba(63,224,255,0.5); box-shadow: 0 0 30px rgba(63,224,255,0.35); display:flex; align-items:center; justify-content:center; }
+.media .play::after{ content:""; border-left: 18px solid #eaf2ff; border-top: 11px solid transparent; border-bottom: 11px solid transparent; margin-left: 5px; }
+.ba{ display: grid; grid-template-columns: 1fr 1fr; }
+.ba > div{ position: relative; aspect-ratio: 1/1; display:flex; align-items:flex-end; justify-content:center; padding: 16px; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: #fff; font-weight: 600; background-size: cover; background-position: center; text-shadow: 0 2px 10px rgba(0,0,0,0.85); }
+.ba > div::after{ content:""; position:absolute; inset:0; background: linear-gradient(to top, rgba(0,0,0,0.55), transparent 55%); }
+.ba > div span{ position: relative; z-index: 1; }
+.ba .before{ background-color: #241a10; }
+.ba .after{ background-color: #072450; }
+
+/* social proof */
+.rating-big{ text-align:center; }
+.rating-big .num{ font-family: var(--font-disp); font-size: 46px; color:#fff; }
+.rating-big .stars{ font-size: 22px; }
+.rating-big p{ color: var(--gray); margin-top: 6px; font-size: 14px; }
+.testi .stars{ font-size: 14px; }
+.testi p{ color: #dce8ff; font-style: italic; margin: 12px 0 16px; }
+.testi .who{ color: var(--gray); font-size: 13px; font-style: normal; }
+.clientpics{ display: grid; grid-template-columns: repeat(6,1fr); gap: 12px; margin-top: 26px; }
+.clientpics div{ aspect-ratio: 1/1; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg,#0a2350,#06183c); border: 1px solid rgba(120,180,255,0.12); display:flex; align-items:center; justify-content:center; color: var(--gray); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+.clientpics img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+/* pricing */
+.prices{ display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; align-items: stretch; }
+.price-card{ position: relative; background: rgba(255,255,255,0.045); border: 1px solid rgba(120,180,255,0.14); border-radius: 20px; padding: 32px 26px; text-align: center; display: flex; flex-direction: column; }
+.price-card.best{ border-color: rgba(63,224,255,0.6); box-shadow: 0 0 44px rgba(63,224,255,0.2); }
+.price-badge{ position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: linear-gradient(120deg,var(--neon-2),var(--neon)); color: #04132e; font-weight: 700; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; padding: 6px 14px; border-radius: 999px; white-space: nowrap; }
+.price-name{ font-family: var(--font-disp); font-weight: 600; color: #eaf2ff; font-size: 17px; }
+.price-big{ font-family: var(--font-disp); font-size: 42px; color: #fff; margin: 10px 0 2px; }
+.price-card .price-old{ font-size: 15px; }
+.price-unit{ color: var(--gray); font-size: 13px; margin-top: 4px; }
+.price-save{ color: var(--neon); font-weight: 600; font-size: 13px; margin-top: 8px; }
+.price-card .cta-btn{ margin-top: 22px; width: 100%; justify-content: center; }
+
+/* guarantee badges */
+.badges{ display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; }
+.badge{ text-align: center; padding: 24px; }
+.badge .ico{ margin: 0 auto 14px; }
+.badge h3{ font-family: var(--font-disp); color: #eaf2ff; font-size: 16px; margin-bottom: 8px; }
+.badge p{ color: var(--graphite); font-size: 14px; line-height: 1.5; }
+
+/* FAQ */
+.faq{ max-width: 800px; margin: 0 auto; display: grid; gap: 12px; }
+.faq details{ background: rgba(255,255,255,0.04); border: 1px solid rgba(120,180,255,0.12); border-radius: 14px; padding: 2px 22px; }
+.faq summary{ cursor: pointer; list-style: none; padding: 18px 0; font-family: var(--font-disp); font-weight: 600; color: #eaf2ff; font-size: 16px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.faq summary::-webkit-details-marker{ display: none; }
+.faq summary::after{ content: "+"; color: var(--neon); font-size: 24px; line-height: 1; }
+.faq details[open] summary::after{ content: "–"; }
+.faq details p{ color: var(--graphite); line-height: 1.65; padding: 0 0 20px; font-size: 15px; }
+
+/* footer */
+.foot{ position: relative; z-index: 4; border-top: 1px solid rgba(120,180,255,0.12); background: #020c20; padding: 56px clamp(22px,6vw,72px) 110px; }
+.foot-grid{ max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 30px; }
+.foot h4{ font-family: var(--font-disp); color: #eaf2ff; font-size: 13px; letter-spacing: .1em; margin-bottom: 14px; text-transform: uppercase; }
+.foot a, .foot p{ color: var(--gray); font-size: 13px; line-height: 1.95; text-decoration: none; }
+.foot a{ display: block; }
+.foot a:hover{ color: var(--neon); }
+.foot .brand-foot{ font-family: var(--font-disp); font-weight: 700; letter-spacing: .2em; color: #eaf2ff; font-size: 16px; margin-bottom: 12px; }
+.foot-bottom{ max-width: 1100px; margin: 30px auto 0; padding-top: 20px; border-top: 1px solid rgba(120,180,255,0.08); color: var(--gray); font-size: 12px; text-align: center; }
+
+/* sticky buy bar */
+#buybar{ position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; transform: translateY(115%); transition: transform .4s ease; background: rgba(4,16,40,0.92); backdrop-filter: blur(12px); border-top: 1px solid rgba(63,224,255,0.25); padding: 12px clamp(16px,5vw,40px); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+body.funnel-active #buybar{ transform: translateY(0); }
+.bb-info{ display: flex; flex-direction: column; }
+.bb-name{ font-family: var(--font-disp); font-weight: 600; color: #eaf2ff; font-size: 14px; }
+.bb-price{ color: var(--neon); font-weight: 700; font-size: 14px; }
+.bb-price s{ color: var(--gray); font-weight: 400; margin-left: 6px; }
+#buybar .cta-btn{ margin-top: 0; padding: 13px 24px; }
+
+/* fade 3D out inside the funnel */
+body.funnel-active #scene-canvas,
+body.funnel-active #fx-canvas,
+body.funnel-active #floor-glow{ opacity: 0; visibility: hidden; transition: opacity .5s ease, visibility .5s ease; }
+
+/* cookie banner (RGPD) */
+#cookie{ position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 60; max-width: 560px; margin: 0 auto; background: rgba(4,16,40,0.97); border: 1px solid rgba(120,180,255,0.22); border-radius: 16px; padding: 18px 20px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; box-shadow: 0 24px 60px -20px #000; }
+#cookie.hide{ display: none; }
+#cookie p{ color: var(--graphite); font-size: 13px; line-height: 1.5; flex: 1 1 240px; }
+#cookie p a{ color: var(--neon); }
+.cookie-btns{ display: flex; gap: 10px; }
+.cookie-btns button{ font-family: var(--font-disp); font-weight: 600; font-size: 13px; border-radius: 999px; padding: 10px 18px; cursor: pointer; border: 1px solid rgba(120,180,255,0.3); background: transparent; color: #cfe0ff; }
+.cookie-btns button.accept{ background: linear-gradient(120deg,var(--blue-deep),var(--blue)); border: none; color: #fff; box-shadow: 0 0 20px rgba(63,224,255,0.35); }
+
+@media (max-width: 860px){
+  .g3, .g2, .split, .prices, .badges, .foot-grid{ grid-template-columns: 1fr; }
+  .clientpics{ grid-template-columns: repeat(3,1fr); }
+  #buybar .bb-info .bb-name{ font-size: 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- background parallax layers -->
+<div id="bg-layer"></div>
+<div id="bg-grid"></div>
+<canvas id="fx-canvas"></canvas>
+
+<!-- three.js canvas + product helpers -->
+<canvas id="scene-canvas"></canvas>
+<div id="floor-glow"></div>
+<div id="light-sweep"></div>
+
+<!-- top bar -->
+<header class="topbar">
+  <div class="brand">DESENGRAS<span class="dot">.</span>VLG</div>
+  <div class="meta">Desengrasante Industrial · 100ml</div>
+</header>
+
+<!-- LOADING SCREEN -->
+<div id="loader">
+  <div class="loader-spin"></div>
+  <div class="loader-mark">Cargando experiencia DESENGRAS VLG</div>
+  <div class="loader-bar"><span id="loader-fill"></span></div>
+  <div class="loader-pct" id="loader-pct">0%</div>
+  <div class="loader-sub" id="loader-status">Inicializando render</div>
+</div>
+
+<!-- FALLBACK -->
+<div id="fallback">
+  <h2>Experiencia 3D no disponible</h2>
+  <p>No pudimos cargar el modelo 3D interactivo. Esto puede ocurrir en conexiones lentas o dispositivos no compatibles. Recarga la página o continúa a la página del producto.</p>
+  <p style="color:var(--graphite); font-weight:600; letter-spacing:.1em;">DESENGRAS VLG — Desengrasante Industrial, 100ml</p>
+</div>
+
+<!-- SCROLL STORYTELLING -->
+<main id="scroll-root">
+
+  <!-- 1 / HERO -->
+  <section class="panel center" id="hero">
+    <div class="content">
+      <div class="eyebrow reveal" data-hero>Desengrasante Industrial</div>
+      <h1 class="headline reveal" data-hero>DESENGRAS&nbsp;VLG</h1>
+      <p class="subline reveal" data-hero>Potencia industrial. Limpieza precisa.</p>
+      <span class="tag reveal" data-hero>Desengrasante Industrial · 100ml</span>
+      <!-- PLACEHOLDER: precio y oferta reales por confirmar -->
+      <div class="hero-cta reveal" data-hero>
+        <div class="hero-price"><span class="price-now">9,95 €</span><span class="price-old">14,95 €</span></div>
+        <a class="cta-btn cta-amazon js-amazon" href="#" target="_blank" rel="noopener">
+          <svg class="cta-ico" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>
+          Comprar en Amazon
+          <span class="arrow">→</span>
+        </a>
+        <div class="hero-trust"><span class="stars">★★★★★</span> <span>4,8/5 · +1.200 valoraciones · Envío por Amazon</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 / SEQUENCE 1 -->
+  <section class="panel" id="seq1">
+    <div class="content">
+      <div class="eyebrow reveal" data-seq="1">Rendimiento</div>
+      <h2 class="headline reveal" data-seq="1">Diseñado para<br><span class="thin">cortar la grasa.</span></h2>
+    </div>
+  </section>
+
+  <!-- 3 / SEQUENCE 2 -->
+  <section class="panel" id="seq2">
+    <div class="content">
+      <div class="eyebrow reveal" data-seq="2">Formato</div>
+      <h2 class="headline reveal" data-seq="2">Formato spray<br><span class="thin">compacto de 100ml.</span></h2>
+      <p class="subline reveal" data-seq="2">Diseñado para una aplicación precisa.</p>
+    </div>
+  </section>
+
+  <!-- TOP-DOWN SHOT -->
+  <section class="panel center shot" id="shotTop">
+    <div class="content">
+      <div class="eyebrow reveal" data-seq="5">Detalle</div>
+      <h2 class="headline reveal" data-seq="5">Ingeniería<br><span class="thin">en cada ángulo.</span></h2>
+    </div>
+  </section>
+
+  <!-- NOZZLE CLOSE-UP SHOT -->
+  <section class="panel center shot" id="shotNozzle">
+    <div class="content">
+      <div class="eyebrow reveal" data-seq="6">Spray de precisión</div>
+      <h2 class="headline reveal" data-seq="6">Justo donde<br><span class="thin">apuntas.</span></h2>
+    </div>
+  </section>
+
+  <!-- 4 / SEQUENCE 3 -->
+  <section class="panel right" id="seq3">
+    <div class="content">
+      <div class="eyebrow reveal" data-seq="3">Ingeniería</div>
+      <h2 class="headline reveal" data-seq="3">Para superficies<br><span class="thin">exigentes.</span></h2>
+      <p class="subline reveal" data-seq="3">Para rutinas de limpieza profesional.</p>
+    </div>
+  </section>
+
+  <!-- 5 / SEQUENCE 4 -->
+  <section class="panel center" id="seq4">
+    <div class="content">
+      <div class="eyebrow reveal" data-seq="4">Potencia</div>
+      <h2 class="headline reveal" data-seq="4">Fuerza industrial<br><span class="thin">en tu mano.</span></h2>
+    </div>
+  </section>
+
+  <!-- 6 / FINAL CTA -->
+  <section class="panel center" id="final">
+    <div class="content">
+      <div class="eyebrow reveal" data-final>DESENGRAS VLG</div>
+      <h2 class="headline reveal" data-final>Limpieza<span class="thin"> sin concesiones.</span></h2>
+      <p class="subline reveal" data-final style="margin-left:auto;margin-right:auto;">Desengrasado de nivel profesional, listo cuando lo necesites.</p>
+      <div class="cta-group reveal" data-final>
+        <a class="cta-btn cta-amazon js-amazon" id="cta-amazon" href="#" target="_blank" rel="noopener">
+          <svg class="cta-ico" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>
+          Comprar en Amazon
+          <span class="arrow">→</span>
+        </a>
+        <a class="cta-btn cta-ghost js-shop" id="cta-shop" href="#">
+          Comprar aquí · pago directo
+          <span class="arrow">→</span>
+        </a>
+      </div>
+      <div class="final-note reveal" data-final>Logística y envío gestionados por Amazon · 100ml</div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============================================================
+     CONVERSION FUNNEL  (textos y precios = PLACEHOLDER editables)
+     ============================================================ -->
+<div id="funnel">
+
+  <!-- PROBLEMA -> SOLUCIÓN -->
+  <section class="sec">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="sec-eyebrow">El problema</div>
+        <h2 class="sec-title">La grasa difícil <span class="thin">te hace perder el tiempo.</span></h2>
+        <p class="sec-lead">Frotar una y otra vez, productos que no terminan de funcionar y superficies que siguen pegajosas. DESENGRAS VLG está formulado para acabar con eso.</p>
+      </div>
+      <div class="split">
+        <div class="panel-card">
+          <h3>Sin DESENGRAS VLG</h3>
+          <ul class="checklist crosslist">
+            <li>Grasa incrustada que no sale</li>
+            <li>Frotar sin parar y perder tiempo</li>
+            <li>Productos genéricos que no rinden</li>
+            <li>Olores fuertes y residuos</li>
+          </ul>
+        </div>
+        <div class="panel-card good">
+          <h3>Con DESENGRAS VLG</h3>
+          <ul class="checklist">
+            <li>Disuelve la grasa en segundos</li>
+            <li>Sin esfuerzo, sin frotar</li>
+            <li>Potencia de nivel profesional</li>
+            <li>Acabado limpio en múltiples superficies</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BENEFICIOS -->
+  <section class="sec">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="sec-eyebrow">Beneficios</div>
+        <h2 class="sec-title">Resultados, <span class="thin">no promesas.</span></h2>
+      </div>
+      <div class="grid g3">
+        <div class="card"><div class="ico">⚡</div><h3>Desengrasa en segundos</h3><p>Actúa al instante sobre la grasa más difícil para que limpies en menos tiempo.</p></div>
+        <div class="card"><div class="ico">💪</div><h3>Sin esfuerzo</h3><p>Pulveriza, espera y retira. Olvídate de frotar hasta cansarte.</p></div>
+        <div class="card"><div class="ico">🛡️</div><h3>Multisuperficie</h3><p>Cocina, motor, taller y más. Una sola solución para tus tareas más exigentes.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEMOSTRACIÓN -->
+  <section class="sec">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="sec-eyebrow">Demostración</div>
+        <h2 class="sec-title">Míralo <span class="thin">en acción.</span></h2>
+        <p class="sec-lead">El antes y el después habla por sí solo. (Sustituir por vídeo / fotos reales del producto.)</p>
+      </div>
+      <div class="grid g2">
+        <!-- Vídeo de YouTube (temático; sustituir por el vídeo real del producto) -->
+        <div class="media"><iframe src="https://www.youtube.com/embed/fJ7OX-PB4a0" title="Demostración limpia grasa" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="width:100%;height:100%;border:0;display:block;"></iframe></div>
+        <!-- Antes / Después (imágenes de stock Unsplash; sustituir por fotos reales) -->
+        <div class="media"><div class="ba">
+          <div class="before" style="background-image:url('https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?w=700&q=80&auto=format&fit=crop')"><span>Antes</span></div>
+          <div class="after" style="background-image:url('https://images.unsplash.com/photo-1600585152220-90363fe7e115?w=700&q=80&auto=format&fit=crop')"><span>Después</span></div>
+        </div></div>
+      </div>
+      <div class="usecases">
+        <span class="usecase">Cocina</span>
+        <span class="usecase">Campana extractora</span>
+        <span class="usecase">Motor y mecánica</span>
+        <span class="usecase">Taller</span>
+        <span class="usecase">Barbacoa y plancha</span>
+        <span class="usecase">Llantas</span>
+        <span class="usecase">Herramientas</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRUEBA SOCIAL -->
+  <section class="sec">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="sec-eyebrow">Lo que dicen los clientes</div>
+        <h2 class="sec-title">Miles de manos <span class="thin">ya confían en él.</span></h2>
+      </div>
+      <div class="rating-big" style="margin-bottom:40px;">
+        <div class="num">4,8<span style="font-size:24px;color:var(--gray);">/5</span></div>
+        <div class="stars">★★★★★</div>
+        <p>Basado en +1.200 valoraciones · +10.000 unidades vendidas</p>
+      </div>
+      <div class="grid g3">
+        <div class="card testi"><div class="stars">★★★★★</div><p>"Quité grasa de la campana que llevaba años pegada. Brutal."</p><div class="who">— Cliente verificado</div></div>
+        <div class="card testi"><div class="stars">★★★★★</div><p>"Lo uso en el taller a diario. Rinde muchísimo y no huele fuerte."</p><div class="who">— Cliente verificado</div></div>
+        <div class="card testi"><div class="stars">★★★★★</div><p>"Pulverizas y se va sola la grasa. No vuelvo a otro producto."</p><div class="who">— Cliente verificado</div></div>
+      </div>
+      <!-- Fotos de clientes (imágenes de stock Unsplash; sustituir por reales) -->
+      <div class="clientpics">
+        <div><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&q=80&auto=format&fit=crop" alt="Cliente" loading="lazy"></div>
+        <div><img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&q=80&auto=format&fit=crop" alt="Cliente" loading="lazy"></div>
+        <div><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80&auto=format&fit=crop" alt="Cliente" loading="lazy"></div>
+        <div><img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&q=80&auto=format&fit=crop" alt="Cliente" loading="lazy"></div>
+        <div><img src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=300&q=80&auto=format&fit=crop" alt="Cliente" loading="lazy"></div>
+        <div><img src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=300&q=80&auto=format&fit=crop" alt="Cliente" loading="lazy"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OFERTA / PRECIO -->
+  <section class="sec" id="oferta">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="sec-eyebrow">Elige tu pack</div>
+        <h2 class="sec-title">Cuantos más, <span class="thin">mejor precio.</span></h2>
+        <p class="sec-lead">Precios de ejemplo — se ajustarán a los reales. El pack ahorra y sube el valor del pedido.</p>
+      </div>
+      <div class="prices">
+        <div class="price-card">
+          <div class="price-name">1 unidad</div>
+          <div class="price-big">9,95 €</div>
+          <div class="price-old">14,95 €</div>
+          <div class="price-unit">9,95 € / unidad</div>
+          <a class="cta-btn cta-amazon js-amazon" href="#" target="_blank" rel="noopener">Comprar<span class="arrow">→</span></a>
+        </div>
+        <div class="price-card best">
+          <div class="price-badge">Más popular</div>
+          <div class="price-name">Pack 2 unidades</div>
+          <div class="price-big">17,95 €</div>
+          <div class="price-old">29,90 €</div>
+          <div class="price-unit">8,98 € / unidad</div>
+          <div class="price-save">Ahorras 40%</div>
+          <a class="cta-btn cta-amazon js-amazon" href="#" target="_blank" rel="noopener">Comprar<span class="arrow">→</span></a>
+        </div>
+        <div class="price-card">
+          <div class="price-name">Pack 3 unidades</div>
+          <div class="price-big">24,95 €</div>
+          <div class="price-old">44,85 €</div>
+          <div class="price-unit">8,32 € / unidad</div>
+          <div class="price-save">Mejor precio</div>
+          <a class="cta-btn cta-amazon js-amazon" href="#" target="_blank" rel="noopener">Comprar<span class="arrow">→</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GARANTÍA / CONFIANZA -->
+  <section class="sec">
+    <div class="wrap">
+      <div class="badges">
+        <div class="badge"><div class="ico">↩️</div><h3>Garantía de devolución</h3><p>Si no te convence, te devolvemos el dinero.</p></div>
+        <div class="badge"><div class="ico">🔒</div><h3>Pago 100% seguro</h3><p>Compra protegida a través de Amazon.</p></div>
+        <div class="badge"><div class="ico">🚚</div><h3>Envío rápido</h3><p>Logística y entrega gestionadas por Amazon.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="sec">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="sec-eyebrow">Dudas frecuentes</div>
+        <h2 class="sec-title">Todo lo que <span class="thin">necesitas saber.</span></h2>
+      </div>
+      <div class="faq">
+        <details><summary>¿En qué superficies puedo usarlo?</summary><p>(Placeholder) En cocina, campanas, motores, herramientas, llantas, barbacoas y más. Indicar superficies no recomendadas según el fabricante.</p></details>
+        <details><summary>¿Es seguro de usar?</summary><p>(Placeholder) Indicar composición, precauciones y certificaciones reales del producto.</p></details>
+        <details><summary>¿Cuánto rinde un envase de 100 ml?</summary><p>(Placeholder) Indicar rendimiento aproximado y si es concentrado/diluible.</p></details>
+        <details><summary>¿Cuánto tarda el envío?</summary><p>(Placeholder) Envío gestionado por Amazon; indicar plazos según destino.</p></details>
+        <details><summary>¿Puedo devolverlo si no me convence?</summary><p>(Placeholder) Política de devoluciones de Amazon / de la tienda.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FINAL -->
+  <section class="sec" style="text-align:center;">
+    <div class="wrap">
+      <div class="sec-head" style="margin-bottom:30px;">
+        <div class="sec-eyebrow">Empieza hoy</div>
+        <h2 class="sec-title">Limpieza <span class="thin">sin concesiones.</span></h2>
+      </div>
+      <div class="cta-group">
+        <a class="cta-btn cta-amazon js-amazon" href="#" target="_blank" rel="noopener">
+          <svg class="cta-ico" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>
+          Comprar en Amazon <span class="arrow">→</span>
+        </a>
+        <a class="cta-btn cta-ghost js-shop" href="#">Comprar aquí · pago directo <span class="arrow">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER LEGAL -->
+  <footer class="foot">
+    <div class="foot-grid">
+      <div>
+        <div class="brand-foot">DESENGRAS·VLG</div>
+        <!-- PLACEHOLDER: datos fiscales reales de la empresa -->
+        <p>Desengrasante industrial de alto rendimiento.</p>
+        <p>[Razón social S.L.] · CIF [B-00000000]</p>
+        <p>[Dirección fiscal], España</p>
+      </div>
+      <div>
+        <h4>Legal</h4>
+        <a href="#">Política de privacidad</a>
+        <a href="#">Términos y condiciones</a>
+        <a href="#">Política de devoluciones</a>
+        <a href="#">Política de cookies</a>
+        <a href="#">Aviso legal</a>
+      </div>
+      <div>
+        <h4>Contacto</h4>
+        <a href="mailto:info@desengrasvlg.com">info@desengrasvlg.com</a>
+        <a href="#">Atención al cliente</a>
+        <a href="#">Instagram</a>
+      </div>
+    </div>
+    <div class="foot-bottom">© <span id="year"></span> DESENGRAS VLG. Todos los derechos reservados. · Marcas y nombres son propiedad de sus titulares.</div>
+  </footer>
+
+</div>
+
+<!-- STICKY BUY BAR -->
+<div id="buybar">
+  <div class="bb-info">
+    <span class="bb-name">DESENGRAS VLG · 100ml</span>
+    <span class="bb-price">9,95 € <s>14,95 €</s></span>
+  </div>
+  <a class="cta-btn cta-amazon js-amazon" href="#" target="_blank" rel="noopener">Comprar en Amazon <span class="arrow">→</span></a>
+</div>
+
+<!-- COOKIE CONSENT (RGPD) -->
+<div id="cookie">
+  <p>Usamos cookies propias y de terceros para analítica y publicidad (incluido el píxel de Meta). <a href="#">Más información</a>.</p>
+  <div class="cookie-btns">
+    <button data-v="reject">Rechazar</button>
+    <button class="accept" data-v="accept">Aceptar</button>
+  </div>
+</div>
+
+<!-- scroll hint -->
+<div class="scroll-hint" id="scroll-hint">
+  <div class="mouse"></div>
+  <span>Desliza</span>
+</div>
+
+<!-- ============================ LIBRARIES ============================ -->
+<!-- GSAP + ScrollTrigger (UMD globals) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<!-- ============================ AMBIENT AQUEOUS PARTICLES ============================ -->
+<script>
+(function(){
+  const c = document.getElementById('fx-canvas');
+  if(!c) return;
+  const ctx = c.getContext('2d');
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const mobile  = window.matchMedia('(max-width:760px)').matches;
+  let w, h, dpr, particles = [], raf;
+  const COUNT = mobile ? 26 : 64;
+
+  function resize(){
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    w = c.clientWidth; h = c.clientHeight;
+    c.width = w * dpr; c.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  const rnd = (a,b) => a + Math.random() * (b - a);
+
+  function makeParticle(initial){
+    const big = Math.random() < 0.22;            // soft bokeh droplets for depth
+    return {
+      x: rnd(0, w),
+      y: initial ? rnd(0, h) : h + rnd(10, 90),
+      r: big ? rnd(10, 24) : rnd(1.2, 4.6),
+      big,
+      vy: big ? rnd(6, 12) : rnd(14, 34),        // px/s, drifting upward like spray mist
+      sway: rnd(0.3, 1.1),
+      phase: rnd(0, Math.PI * 2),
+      alpha: big ? rnd(0.05, 0.12) : rnd(0.22, 0.6)
+    };
+  }
+  function init(){
+    resize();
+    particles = Array.from({ length: COUNT }, () => makeParticle(true));
+  }
+
+  let last = performance.now();
+  function frame(now){
+    const dt = Math.min((now - last) / 1000, 0.05); last = now;
+    ctx.clearRect(0, 0, w, h);
+    for (const p of particles){
+      p.y -= p.vy * dt;
+      p.phase += dt * p.sway;
+      const x = p.x + Math.sin(p.phase) * (p.big ? 20 : 9);
+      if (p.y < -40) Object.assign(p, makeParticle(false));
+      const g = ctx.createRadialGradient(x, p.y, 0, x, p.y, p.r);
+      g.addColorStop(0,   'rgba(190,228,255,' + p.alpha + ')');
+      g.addColorStop(0.6, 'rgba(120,190,255,' + (p.alpha * 0.5) + ')');
+      g.addColorStop(1,   'rgba(120,190,255,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+    }
+    raf = requestAnimationFrame(frame);
+  }
+  function start(){ cancelAnimationFrame(raf); last = performance.now(); raf = requestAnimationFrame(frame); }
+
+  window.addEventListener('resize', resize);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) cancelAnimationFrame(raf); else start();
+  });
+
+  init();
+  if (!reduced) start(); else { frame(performance.now()); cancelAnimationFrame(raf); }
+})();
+</script>
+
+<!-- Three.js as ES modules via import map -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+/* ----------------------------------------------------------------------
+   CONFIG
+   NOTE: The original GLB shipped with a broken texture declaration
+   (textures were PNG but labelled image/webp + KHR_texture_basisu, which
+   made three.js refuse to load it). We use a repaired GLB sitting next to
+   this file. Upload "bottle-fixed.glb" to your GitHub repo and swap the
+   URL below for the raw link when deploying.
+---------------------------------------------------------------------- */
+const MODEL_URL = 'bottle-fixed.glb';  // 22 MB (para Ads: servir desde CDN con gzip ~8MB)
+
+const isMobile = window.matchMedia('(max-width: 760px)').matches ||
+                 /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+console.log('%c[DESENGRAS VLG] Initializing 3D experience…', 'color:#1f5fff;font-weight:bold');
+console.log('[DESENGRAS VLG] Device profile:', isMobile ? 'MOBILE (reduced quality)' : 'DESKTOP (full quality)');
+
+/* ----------------------------------------------------------------------
+   DOM REFS
+---------------------------------------------------------------------- */
+const canvas      = document.getElementById('scene-canvas');
+const loaderEl    = document.getElementById('loader');
+const loaderFill  = document.getElementById('loader-fill');
+const loaderPct   = document.getElementById('loader-pct');
+const loaderStat  = document.getElementById('loader-status');
+const fallbackEl  = document.getElementById('fallback');
+const lightSweep  = document.getElementById('light-sweep');
+const floorGlow   = document.getElementById('floor-glow');
+const scrollHint  = document.getElementById('scroll-hint');
+
+/* ----------------------------------------------------------------------
+   RENDERER
+---------------------------------------------------------------------- */
+const renderer = new THREE.WebGLRenderer({
+  canvas,
+  antialias: !isMobile,
+  alpha: true,                 // let CSS background show through (parallax layer)
+  powerPreference: 'high-performance'
+});
+renderer.setSize(window.innerWidth, window.innerHeight, false);
+// Cap pixel ratio aggressively on mobile for performance on a 22MB model
+const maxPR = isMobile ? 1.5 : 2;
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxPR));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.08;
+renderer.shadowMap.enabled = !isMobile;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+/* ----------------------------------------------------------------------
+   SCENE / CAMERA
+---------------------------------------------------------------------- */
+const scene = new THREE.Scene();              // transparent background -> CSS shows
+
+const camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 0.2, 7.5);
+const camTarget = new THREE.Vector3(0, 0, 0);
+
+/* Environment for premium metallic reflections (no external HDRI needed) */
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+/* ----------------------------------------------------------------------
+   LIGHTING — soft studio
+---------------------------------------------------------------------- */
+const ambient = new THREE.AmbientLight(0xffffff, 0.45);
+scene.add(ambient);
+
+const keyLight = new THREE.DirectionalLight(0xffffff, 2.6);
+keyLight.position.set(4, 6, 5);
+keyLight.castShadow = !isMobile;
+if (keyLight.castShadow){
+  keyLight.shadow.mapSize.set(1024, 1024);
+  keyLight.shadow.camera.near = 0.5;
+  keyLight.shadow.camera.far = 30;
+  keyLight.shadow.bias = -0.0004;
+}
+scene.add(keyLight);
+
+const fillLight = new THREE.DirectionalLight(0xdfe7ff, 1.0);
+fillLight.position.set(-5, 1.5, 2);
+scene.add(fillLight);
+
+const rimLight = new THREE.DirectionalLight(0x3b7bff, 1.4);  // deep blue accent rim
+rimLight.position.set(-3, 3, -5);
+scene.add(rimLight);
+
+// movable "shine" light animated during sequence 3
+const sweepLight = new THREE.PointLight(0xffffff, 0.0, 20, 2);
+sweepLight.position.set(-4, 2, 4);
+scene.add(sweepLight);
+
+/* ----------------------------------------------------------------------
+   GROUPS
+   - bottleGroup : scroll-controlled rotation + position (the "camera move" feel)
+   - floatPivot  : continuous floating / idle motion (independent of scroll)
+---------------------------------------------------------------------- */
+const bottleGroup = new THREE.Group();
+const floatPivot  = new THREE.Group();
+bottleGroup.add(floatPivot);
+scene.add(bottleGroup);
+
+/* ----------------------------------------------------------------------
+   CONTACT SHADOW (cheap soft ground shadow)
+---------------------------------------------------------------------- */
+if (!isMobile){
+  const shadowTex = makeRadialShadowTexture();
+  const shadowMat = new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, opacity: 0.55, depthWrite: false });
+  const shadowPlane = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), shadowMat);
+  shadowPlane.rotation.x = -Math.PI / 2;
+  shadowPlane.position.y = -1.55;
+  bottleGroup.add(shadowPlane);
+}
+
+function makeRadialShadowTexture(){
+  const c = document.createElement('canvas');
+  c.width = c.height = 256;
+  const ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(128,128,10,128,128,128);
+  g.addColorStop(0, 'rgba(20,23,28,0.55)');
+  g.addColorStop(0.5, 'rgba(20,23,28,0.18)');
+  g.addColorStop(1, 'rgba(20,23,28,0)');
+  ctx.fillStyle = g; ctx.fillRect(0,0,256,256);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+/* ----------------------------------------------------------------------
+   LOADERS (DRACO + Meshopt to support "compressed" GLB)
+---------------------------------------------------------------------- */
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+dracoLoader.setDecoderConfig({ type: 'js' });
+
+// KTX2 / Basis support (robustness for any GLB that genuinely uses it)
+const ktx2Loader = new KTX2Loader();
+ktx2Loader.setTranscoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/basis/');
+ktx2Loader.detectSupport(renderer);
+
+const gltfLoader = new GLTFLoader();
+gltfLoader.setDRACOLoader(dracoLoader);
+gltfLoader.setKTX2Loader(ktx2Loader);
+gltfLoader.setMeshoptDecoder(MeshoptDecoder);
+
+let bottle = null;
+let modelReady = false;
+
+/* progress UI helper */
+function setProgress(pct, status){
+  const p = Math.max(0, Math.min(100, Math.round(pct)));
+  loaderFill.style.width = p + '%';
+  loaderPct.textContent = p + '%';
+  if (status) loaderStat.textContent = status;
+}
+
+/* safety: if it never loads, show fallback after a long timeout */
+const loadTimeout = setTimeout(() => {
+  if (!modelReady){
+    console.error('[DESENGRAS VLG] Load timeout — model did not finish in time.');
+    showFallback();
+  }
+}, 60000);
+
+console.log('[DESENGRAS VLG] Loading model:', MODEL_URL);
+setProgress(2, 'Descargando modelo 3D (~22 MB)');
+
+gltfLoader.load(
+  MODEL_URL,
+
+  // ---------- onLoad ----------
+  (gltf) => {
+    clearTimeout(loadTimeout);
+    console.log('%c[DESENGRAS VLG] ✓ Model loaded successfully', 'color:#1f9d55;font-weight:bold', gltf);
+    setProgress(100, 'Finalizando escena');
+
+    bottle = gltf.scene;
+
+    // Normalize: center + scale to a consistent hero size
+    const box = new THREE.Box3().setFromObject(bottle);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z) || 1;
+    const targetHeight = 3.0;             // world units for the hero pose
+    const scale = targetHeight / maxDim;
+    bottle.scale.setScalar(scale);
+
+    // recenter so model origin sits at group origin
+    bottle.position.sub(center.multiplyScalar(scale));
+
+    bottle.traverse((o) => {
+      if (o.isMesh){
+        o.castShadow = !isMobile;
+        o.receiveShadow = false;
+        if (o.material){
+          o.material.envMapIntensity = 1.1;
+          // keep premium metallic look crisp
+          if ('roughness' in o.material) o.material.needsUpdate = true;
+        }
+        if (o.geometry) o.geometry.computeBoundingSphere?.();
+      }
+    });
+
+    floatPivot.add(bottle);
+    modelReady = true;
+
+    // expose for live framing/tuning in the preview console
+    window.__DV = { THREE, scene, camera, camTarget, bottleGroup, floatPivot, bottle, renderer };
+
+    startExperience();
+  },
+
+  // ---------- onProgress ----------
+  (xhr) => {
+    if (xhr.lengthComputable && xhr.total > 0){
+      const pct = (xhr.loaded / xhr.total) * 100;
+      // reserve top 8% for decode/setup
+      setProgress(pct * 0.92, `Descargando modelo 3D · ${(xhr.loaded/1048576).toFixed(1)} / ${(xhr.total/1048576).toFixed(1)} MB`);
+      console.log(`[DESENGRAS VLG] Loading progress: ${pct.toFixed(1)}% (${(xhr.loaded/1048576).toFixed(1)} MB)`);
+    } else {
+      // server didn't send content-length (common with GitHub redirects)
+      const mb = xhr.loaded / 1048576;
+      // fake a smooth crawl toward 90% based on assumed ~22MB
+      const approx = Math.min(90, (mb / 22) * 90);
+      setProgress(approx, `Descargando modelo 3D · ${mb.toFixed(1)} MB`);
+      console.log(`[DESENGRAS VLG] Loading… ${mb.toFixed(1)} MB received (total unknown)`);
+    }
+  },
+
+  // ---------- onError ----------
+  (err) => {
+    clearTimeout(loadTimeout);
+    console.error('%c[DESENGRAS VLG] ✗ Error loading model', 'color:#d9534f;font-weight:bold', err);
+    showFallback();
+  }
+);
+
+function showFallback(){
+  loaderEl.classList.add('hidden');
+  fallbackEl.classList.add('show');
+}
+
+/* ----------------------------------------------------------------------
+   RENDER LOOP
+---------------------------------------------------------------------- */
+const clock = new THREE.Clock();
+let renderRequested = true;   // always render (continuous floating motion)
+
+function animate(){
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+
+  if (modelReady && !prefersReduced){
+    // subtle floating bottle
+    floatPivot.position.y = Math.sin(t * 0.9) * 0.08;
+    floatPivot.rotation.z = Math.sin(t * 0.6) * 0.012;
+  }
+
+  // smooth camera look-at
+  camera.lookAt(camTarget);
+
+  renderer.render(scene, camera);
+}
+animate();
+
+/* ----------------------------------------------------------------------
+   SCROLL CHOREOGRAPHY (GSAP + ScrollTrigger)
+---------------------------------------------------------------------- */
+function startExperience(){
+  // hide loader
+  gsap.to(loaderEl, { opacity: 0, duration: 0.8, onComplete: () => loaderEl.classList.add('hidden') });
+  console.log('[DESENGRAS VLG] ▶ Experience started — choreography active');
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  // --- HERO intro reveal ---
+  gsap.to('[data-hero]', {
+    opacity: 1, y: 0, duration: 1.1, ease: 'power3.out', stagger: 0.12, delay: 0.15
+  });
+
+  // --- Generic text reveals per sequence (data-seq -> trigger section) ---
+  const revealMap = [
+    ['1', '#seq1'], ['2', '#seq2'],
+    ['5', '#shotTop'], ['6', '#shotNozzle'],
+    ['3', '#seq3'], ['4', '#seq4']
+  ];
+  revealMap.forEach(([n, trig]) => {
+    gsap.to(`[data-seq="${n}"]`, {
+      scrollTrigger: {
+        trigger: trig,
+        start: 'top 70%',
+        end: 'bottom 60%',
+        toggleActions: 'play reverse play reverse'
+      },
+      opacity: 1, y: 0, duration: 0.9, ease: 'power3.out', stagger: 0.12
+    });
+  });
+
+  // --- FINAL reveal ---
+  gsap.to('[data-final]', {
+    scrollTrigger: { trigger: '#final', start: 'top 65%', toggleActions: 'play none none reverse' },
+    opacity: 1, y: 0, duration: 1.0, ease: 'power3.out', stagger: 0.12
+  });
+
+  // hide scroll hint after first scroll
+  ScrollTrigger.create({
+    start: 'top -40',
+    onEnter: () => gsap.to(scrollHint, { opacity: 0, duration: 0.4 }),
+    onLeaveBack: () => gsap.to(scrollHint, { opacity: 1, duration: 0.4 })
+  });
+
+  /* =========================================================
+     MASTER CINEMATIC TIMELINE — scrubbed by full-page scroll
+     8 sections -> 7 acts. Camera + camTarget + bottle are driven
+     together so the two close-ups frame precisely.
+     Acts: 0 hero→seq1 · 1 seq1→seq2 · 2 seq2→TOPDOWN ·
+           3 TOPDOWN→NOZZLE · 4 NOZZLE→seq3 · 5 seq3→seq4 · 6 seq4→final
+     ========================================================= */
+  const tl = gsap.timeline({
+    scrollTrigger: {
+      trigger: '#scroll-root',
+      start: 'top top',
+      end: 'bottom bottom',
+      scrub: isMobile ? 0.6 : 1.0
+    }
+  });
+
+  const RX = isMobile ? 0.6 : 1.6;   // horizontal shift amount
+
+  // initial pose
+  camera.position.set(0, 0.2, 7.5);
+  camTarget.set(0, 0, 0);
+  bottleGroup.position.set(0, 0, 0);
+  bottleGroup.rotation.set(0, -0.2, 0);
+
+  // ACT 0  hero -> seq1 : camera dollies in, slight rotate
+  tl.to(camera.position, { z: 5.6, y: 0.0, duration: 1, ease: 'power1.inOut' }, 0)
+    .to(bottleGroup.rotation, { y: 0.5, duration: 1, ease: 'power1.inOut' }, 0);
+
+  // ACT 1  seq1 -> seq2 : bottle slides right
+  tl.to(bottleGroup.position, { x: RX, duration: 1, ease: 'power2.inOut' }, 1)
+    .to(bottleGroup.rotation, { y: 0.9, duration: 1, ease: 'power1.inOut' }, 1)
+    .to(camera.position, { z: 5.8, duration: 1, ease: 'power1.inOut' }, 1);
+
+  // ACT 2  seq2 -> TOP-DOWN : recenter + camera rises above, looking down
+  tl.to(bottleGroup.position, { x: 0, y: 0, duration: 1, ease: 'power2.inOut' }, 2)
+    .to(bottleGroup.rotation, { y: -0.55, x: 0, duration: 1, ease: 'power1.inOut' }, 2)
+    .to(camera.position, { x: 0, y: 4.0, z: 2.55, duration: 1, ease: 'power2.inOut' }, 2)
+    .to(camTarget, { x: 0, y: 0.15, z: 0, duration: 1, ease: 'power2.inOut' }, 2);
+
+  // ACT 3  TOP-DOWN -> NOZZLE : drop in, front close-up of the spray tip
+  tl.to(camera.position, { x: 0, y: 1.05, z: 2.5, duration: 1, ease: 'power2.inOut' }, 3)
+    .to(camTarget, { x: 0, y: 1.05, z: 0, duration: 1, ease: 'power2.inOut' }, 3)
+    .to(bottleGroup.rotation, { y: -1.35, x: 0, duration: 1, ease: 'power1.inOut' }, 3)
+    .to(bottleGroup.position, { x: 0, y: 0, duration: 1, ease: 'power1.inOut' }, 3);
+
+  // ACT 4  NOZZLE -> seq3 : back out, bottle left, depth rotate + light sweep
+  tl.to(camTarget, { x: 0, y: 0, z: 0, duration: 1, ease: 'power2.inOut' }, 4)
+    .to(camera.position, { x: 0.3, y: 0.0, z: 5.2, duration: 1, ease: 'power2.inOut' }, 4)
+    .to(bottleGroup.position, { x: -RX, duration: 1, ease: 'power2.inOut' }, 4)
+    .to(bottleGroup.rotation, { y: 0.6, x: 0.12, duration: 1, ease: 'power1.inOut' }, 4)
+    .to(sweepLight, { intensity: 3.2, duration: 0.5, ease: 'power1.in' }, 4)
+    .to(sweepLight.position, { x: 4, duration: 1, ease: 'none' }, 4)
+    .to(sweepLight, { intensity: 0.0, duration: 0.5, ease: 'power1.out' }, 4.5)
+    .fromTo(lightSweep, { opacity: 0, x: '-30%' }, { opacity: 0.9, x: '30%', duration: 0.5, ease: 'power1.in' }, 4.1)
+    .to(lightSweep, { opacity: 0, x: '120%', duration: 0.6, ease: 'power1.out' }, 4.55);
+
+  // ACT 5  seq3 -> seq4 : zoom out, return to center, dramatic pose
+  tl.to(bottleGroup.position, { x: 0, duration: 1, ease: 'power2.inOut' }, 5)
+    .to(bottleGroup.rotation, { y: 0.0, x: 0.0, duration: 1, ease: 'power1.inOut' }, 5)
+    .to(camera.position, { z: 7.0, x: 0, y: 0.3, duration: 1, ease: 'power1.inOut' }, 5);
+
+  // ACT 6  seq4 -> final : settle into a clean centered hero for the CTA
+  tl.to(bottleGroup.rotation, { y: -0.18, duration: 1, ease: 'power1.inOut' }, 6)
+    .to(camera.position, { z: 6.4, y: 0.1, x: 0, duration: 1, ease: 'power1.inOut' }, 6)
+    .to(bottleGroup.position, { x: 0, y: 0, duration: 1, ease: 'power1.inOut' }, 6);
+
+  /* --- Parallax: background layer + floor glow move against scroll --- */
+  gsap.to('#bg-layer', {
+    yPercent: 12,
+    scrollTrigger: { trigger: '#scroll-root', start: 'top top', end: 'bottom bottom', scrub: true }
+  });
+  gsap.to('#bg-grid', {
+    yPercent: -8,
+    scrollTrigger: { trigger: '#scroll-root', start: 'top top', end: 'bottom bottom', scrub: true }
+  });
+  gsap.to(floorGlow, {
+    opacity: 0.35,
+    scrollTrigger: { trigger: '#seq4', start: 'top center', end: 'bottom center', scrub: true }
+  });
+
+  // refresh once layout settles
+  ScrollTrigger.refresh();
+}
+
+/* ----------------------------------------------------------------------
+   CTA (non-functional placeholder for now)
+---------------------------------------------------------------------- */
+// Los clics de compra se gestionan por clase (.js-amazon / .js-shop) en el script del embudo (más abajo).
+
+/* ----------------------------------------------------------------------
+   RESIZE
+---------------------------------------------------------------------- */
+let resizeRAF;
+window.addEventListener('resize', () => {
+  cancelAnimationFrame(resizeRAF);
+  resizeRAF = requestAnimationFrame(() => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight, false);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxPR));
+    if (window.ScrollTrigger) ScrollTrigger.refresh();
+  });
+});
+
+/* pause rendering when tab hidden (perf) */
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) clock.stop(); else clock.start();
+});
+</script>
+
+<!-- ============================ FUNNEL UI ============================ -->
+<script>
+(function(){
+  // current year
+  const y = document.getElementById('year'); if (y) y.textContent = new Date().getFullYear();
+
+  // show sticky bar + fade 3D once we reach the funnel
+  const funnel = document.getElementById('funnel');
+  function onScroll(){
+    if (!funnel) return;
+    const trigger = funnel.offsetTop - window.innerHeight * 0.6;
+    document.body.classList.toggle('funnel-active', window.scrollY > trigger);
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
+  onScroll();
+
+  // buy clicks (placeholders until real URLs are set)
+  document.querySelectorAll('.js-amazon').forEach((b) => b.addEventListener('click', (e) => {
+    e.preventDefault();
+    console.log('[DESENGRAS VLG] CTA → Comprar en Amazon (URL no configurada aún).');
+  }));
+  document.querySelectorAll('.js-shop').forEach((b) => b.addEventListener('click', (e) => {
+    e.preventDefault();
+    console.log('[DESENGRAS VLG] CTA → Comprar aquí / Shopify (URL no configurada aún).');
+  }));
+
+  // cookie consent (RGPD)
+  const cookie = document.getElementById('cookie');
+  if (cookie){
+    if (localStorage.getItem('dv_cookie')) cookie.classList.add('hide');
+    cookie.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+      localStorage.setItem('dv_cookie', b.dataset.v || 'accept');
+      cookie.classList.add('hide');
+      console.log('[DESENGRAS VLG] Consentimiento de cookies:', b.dataset.v);
+    }));
+  }
+})();
+</script>
+</body>
+</html>
